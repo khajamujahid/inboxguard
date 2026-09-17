@@ -2,9 +2,10 @@
 
 Paste a subject and body. InboxGuard stamps the message **spam** or **not spam**, with a confidence score and the phrases that moved the decision.
 
-Repo: [github.com/khajamujahid/inboxguard](https://github.com/khajamujahid/inboxguard)
+- Source: [github.com/khajamujahid/inboxguard](https://github.com/khajamujahid/inboxguard)
+- Live (GitHub Pages, no grok.me): [khajamujahid.github.io/inboxguard](https://khajamujahid.github.io/inboxguard/)
 
-Built as a live product: TF-IDF + logistic regression, a `POST /predict` API, and a public inspector UI. It never connects to Gmail or Outlook and never stores the mail you paste.
+Built as a live product: TF-IDF + logistic regression, a `POST /predict` API on Node hosts, and a public inspector UI. Scoring also runs in the browser, so the UI works on static hosting. It never connects to Gmail or Outlook and never stores the mail you paste.
 
 ## Model
 
@@ -20,7 +21,7 @@ Dataset credit: [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/22
 
 ## API
 
-`POST /predict`
+`POST /predict` (Node / Vercel deploys)
 
 ```json
 { "subject": "Urgent: account locked", "body": "Verify now…" }
@@ -42,6 +43,8 @@ Dataset credit: [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/22
 
 `POST /api/predict` and `GET /api/health` are aliases.
 
+On GitHub Pages the inspector scores in the browser; the JSON API is available when you deploy to Vercel / Node.
+
 ## Run locally
 
 ```bash
@@ -61,7 +64,9 @@ python3 backend/evaluate.py       # prints accuracy / F1
 
 ## Deploy (your own URL, not grok.me)
 
-This is a TanStack Start app. Import the GitHub repo into [Vercel](https://vercel.com/new) (or Netlify, Fly, Railway). Build command is `npm run build`. You will get a `*.vercel.app` URL you can put on a resume.
+**GitHub Pages** is wired up. Push to `main` and the Actions workflow publishes [khajamujahid.github.io/inboxguard](https://khajamujahid.github.io/inboxguard/). First time only: repo **Settings → Pages → Source = GitHub Actions**.
+
+**Vercel** (Node API + UI): import this repo at [vercel.com/new](https://vercel.com/new). Build command is `npm run build`. You get `inboxguard.vercel.app`.
 
 ## Out of scope (v1)
 
