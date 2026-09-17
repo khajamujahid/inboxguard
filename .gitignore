@@ -1,0 +1,17 @@
+node_modules
+.vercel
+.nitro
+.output
+dist
+.grok
+screenshots
+artifacts
+*.log
+.env
+.env.*
+!.env.example
+data/sms.tsv
+data/eval_sample.csv
+models/model.pkl
+.project_id
+.node_modules.lock
