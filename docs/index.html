@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InboxGuard</title>
+  <meta name="description" content="Paste an email. InboxGuard stamps it spam or not, with a confidence score and the phrases that moved it." />
+  <meta name="theme-color" content="#00b89f" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f3fffb; --surface: #fff; --fg: #10241f; --muted: #3d6b64;
+      --subtle: #5d8a82; --accent: #00b89f; --accent-fg: #042820;
+      --accent-dim: #c8fff4; --line: #b7ebe2; --spam: #e11d2e;
+      --spam-dim: #ffe3e0; --ham: #008f45; --ham-dim: #d4fce6;
+      --shadow: 0 0 0 1px rgb(16 36 31 / .06), 0 8px 24px -12px rgb(0 184 159 / .28);
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      margin: 0; min-height: 100dvh; color: var(--fg); font-family: "IBM Plex Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(900px 480px at 8% -8%, rgb(0 184 159 / .28), transparent 58%),
+        radial-gradient(720px 420px at 100% 0%, rgb(225 29 46 / .14), transparent 50%),
+        radial-gradient(640px 360px at 80% 100%, rgb(0 143 69 / .16), transparent 55%),
+        var(--bg);
+    }
+    .wrap { max-width: 72rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .brand { display: flex; align-items: center; gap: .65rem; }
+    .brand p { margin: 0; line-height: 1.15; }
+    .kicker { font-family: "IBM Plex Mono", monospace; font-size: .75rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+    h1 { font-family: Fraunces, Georgia, serif; font-weight: 500; font-size: clamp(2.2rem, 6vw, 3.75rem); letter-spacing: -.03em; line-height: 1.05; margin: .75rem 0 0; }
+    h1 em { font-style: italic; color: var(--accent); }
+    .lede { max-width: 36rem; color: var(--muted); font-size: 1.05rem; line-height: 1.5; }
+    .badge { font-family: "IBM Plex Mono", monospace; font-size: .75rem; background: var(--accent-dim); color: var(--accent-fg); border-radius: 999px; padding: .35rem .7rem; }
+    .samples { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.75rem 0 0; }
+    .samples button {
+      min-height: 44px; border: 0; border-radius: 999px; padding: 0 .9rem; cursor: pointer;
+      font: 500 .875rem "IBM Plex Sans", system-ui, sans-serif;
+    }
+    .samples .spam { background: var(--spam-dim); color: var(--spam); }
+    .samples .ham { background: var(--ham-dim); color: var(--ham); }
+    .samples .on { background: var(--accent); color: var(--accent-fg); }
+    .grid { display: grid; gap: 1rem; margin-top: 1.75rem; }
+    @media (min-width: 960px) { .grid { grid-template-columns: 3fr 2fr; } }
+    .card { background: var(--surface); border-radius: 1.25rem; padding: 1.2rem; box-shadow: var(--shadow); }
+    label { display: block; font-size: .8rem; font-weight: 500; margin: .85rem 0 .35rem; }
+    input, textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: .75rem; padding: .7rem .85rem;
+      font: 400 .95rem "IBM Plex Sans", system-ui, sans-serif; background: #fff; color: var(--fg);
+    }
+    textarea { min-height: 11rem; resize: vertical; }
+    .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-top: 1rem; }
+    .hint { font-size: .75rem; color: var(--subtle); }
+    .go {
+      min-height: 44px; border: 0; border-radius: .9rem; padding: 0 1.15rem; cursor: pointer;
+      background: var(--accent); color: var(--accent-fg); font: 600 .95rem "IBM Plex Sans", system-ui, sans-serif;
+    }
+    .go:disabled { opacity: .5; cursor: not-allowed; }
+    .ghost { background: none; border: 0; color: var(--muted); cursor: pointer; font: 400 .8rem "IBM Plex Sans", system-ui, sans-serif; }
+    .verdict { min-height: 20rem; display: flex; flex-direction: column; }
+    .stamp { font-family: Fraunces, Georgia, serif; font-style: italic; font-size: clamp(2.4rem, 5vw, 3.6rem); margin: 1.2rem 0 0; }
+    .spam-c { color: var(--spam); } .ham-c { color: var(--ham); }
+    .spam-bg { background: var(--spam-dim); } .ham-bg { background: var(--ham-dim); }
+    .bar { height: 6px; background: rgb(16 36 31 / .08); border-radius: 99px; overflow: hidden; margin-top: .5rem; }
+    .bar > span { display: block; height: 100%; border-radius: 99px; }
+    ol { list-style: none; padding: 0; margin: 1.2rem 0 0; display: grid; gap: .5rem; }
+    ol li { background: var(--surface); border-radius: .7rem; padding: .7rem .85rem; box-shadow: var(--shadow); display: flex; gap: .7rem; font-size: .9rem; }
+    .n { font-family: "IBM Plex Mono", monospace; font-size: .75rem; }
+    .steps { display: grid; gap: 1.2rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--line); }
+    @media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+    .steps h2 { font-family: Fraunces, Georgia, serif; font-weight: 500; font-size: 1.25rem; margin: .4rem 0; }
+    .steps p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.45; }
+    footer { margin-top: 2.5rem; padding-top: 1.2rem; border-top: 1px solid var(--line); color: var(--subtle); font-size: .75rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; }
+    a { color: var(--accent); }
+    .await { flex: 1; display: grid; place-items: center; text-align: center; color: var(--muted); }
+    .err { color: var(--spam); font-size: .85rem; margin-top: .6rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#00b89f"/>
+          <path fill="#f3fffb" d="M16 3.4c.35 0 .75.1 1.35.32 2.95 1.12 6.85 2.1 9 2.45.5.08 1.15.52 1.15 1.18v8.7c0 5.7-4.15 10.15-11 12.35-.3.1-.7.1-1 0C7.65 25.95 3.5 21.5 3.5 15.8V7.35c0-.66.65-1.1 1.15-1.18 2.15-.35 6.05-1.33 9-2.45.6-.22 1-.32 1.35-.32z"/>
+        </svg>
+        <div>
+          <p style="font-weight:600">InboxGuard</p>
+          <p style="font-size:.75rem;color:var(--subtle)">Mail, inspected</p>
+        </div>
+      </div>
+      <span class="badge" id="acc">98.3% held-out</span>
+    </header>
+    <p class="kicker" style="margin-top:2.5rem">Spam classifier</p>
+    <h1>Before you <em>click</em>.</h1>
+    <p class="lede">Paste a subject and body. A TF-IDF logistic model stamps it spam or not — with a score and the phrases that moved it. No inbox access.</p>
+    <div class="samples" id="samples"></div>
+    <div class="grid">
+      <form class="card" id="form">
+        <div class="row" style="margin:0">
+          <p class="kicker" style="color:var(--subtle);margin:0">Message</p>
+          <button type="button" class="ghost" id="clear">Clear</button>
+        </div>
+        <label for="subject">Subject</label>
+        <input id="subject" maxlength="500" placeholder="Account alert, intro, digest…" autocomplete="off" />
+        <label for="body">Body</label>
+        <textarea id="body" maxlength="20000" placeholder="Paste the email body. Never include passwords or real account numbers."></textarea>
+        <div class="row">
+          <p class="hint">⌘ Enter to run · nothing is stored</p>
+          <button class="go" id="go" type="submit">Check email</button>
+        </div>
+        <p class="err" id="status" hidden></p>
+      </form>
+      <aside class="card verdict" id="verdict">
+        <p class="kicker" style="color:var(--subtle);margin:0">Verdict</p>
+        <div class="await">
+          <p>Load a sample or paste a message. The stamp and reasons show up here.</p>
+        </div>
+      </aside>
+    </div>
+    <section class="steps">
+      <article><p class="kicker">01</p><h2>Words become numbers</h2><p>TF-IDF weighs each phrase by how unusual it is across the training mail.</p></article>
+      <article><p class="kicker">02</p><h2>A linear stamp</h2><p>Logistic regression learns which n-grams lean spam versus everyday mail.</p></article>
+      <article><p class="kicker">03</p><h2>Readable reasons</h2><p>The top contributing phrases are turned back into sentences you can audit.</p></article>
+    </section>
+    <footer>
+      <p>Trained on the <a href="https://archive.ics.uci.edu/dataset/228/sms+spam+collection">UCI SMS Spam Collection</a> plus a synthetic email corpus. Source: <a href="https://github.com/khajamujahid/inboxguard">github.com/khajamujahid/inboxguard</a></p>
+      <p style="font-family:'IBM Plex Mono',monospace">client-side TF-IDF + logreg</p>
+    </footer>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
