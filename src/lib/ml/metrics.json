@@ -1,0 +1,11 @@
+{
+  "accuracy": 0.9831,
+  "f1": 0.9522,
+  "precision": 0.9648,
+  "recall": 0.9399,
+  "n_train": 5195,
+  "n_test": 1299,
+  "n_features": 4500,
+  "spam_rate_train": 0.1798,
+  "dataset": "UCI SMS Spam Collection + synthetic email corpus"
+}
