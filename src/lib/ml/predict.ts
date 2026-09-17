@@ -1,6 +1,25 @@
-import artifact from "./model.json";
-import type { PredictRequest, Prediction, Signal, SpamLabel } from "./types";
+import vocabularyA from "./vocabulary-a.json";
+import vocabularyB from "./vocabulary-b.json";
+import idfA from "./idf-a.json";
+import idfB from "./idf-b.json";
+import coefA from "./coef-a.json";
+import coefB from "./coef-b.json";
+import meta from "./meta.json";
+import type { ModelArtifact, PredictRequest, Prediction, Signal, SpamLabel } from "./types";
 import { reasonsFor } from "./reasons";
+
+const artifact: ModelArtifact = {
+  version: meta.version,
+  algorithm: meta.algorithm,
+  ngram_range: meta.ngram_range as [number, number],
+  sublinear_tf: meta.sublinear_tf,
+  norm: meta.norm as "l2",
+  intercept: meta.intercept,
+  metrics: meta.metrics,
+  vocabulary: [...vocabularyA, ...vocabularyB],
+  idf: [...idfA, ...idfB],
+  coef: [...coefA, ...coefB],
+};
 
 const TOKEN = /[\p{L}\p{N}_]{2,}/gu;
 
